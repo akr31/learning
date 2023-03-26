@@ -1,48 +1,30 @@
-Kubernetes Learning
+# K8s
 
-A POD is an object which wraps over a collection of  containers that run on a sigle host. Most often you would find just 1 container running on a POD.
-
-POD is the smallent object which you can deploy on k8s. Also PODs are ephemeral in name, i.e. they can fail and will fail. When a pod fails, k8s will not repair it, instead just start a new one! Your services should be designed keeping this reality in mind.
-
-Pods enable scheduling (using affinity), resource sharing between its containers. 
-
-Every pod creates its own net namespace i.e. gets its own IP which is fully routable on the internal k8s pod network. Each container in the Pod shares the IP address assigned to the POD.
-
-You should always scale the number of PODs not the number of containers in the PODs.
-
-To know more about PODs try the `kubectl explain pods` command. Here listing down a few key options:'
-
-pods.Metadata:
-- Name: A unique name for the pod, this is required, however some resources(like deployments) may assign this name automatically; your containers will inherit this as their hostname.
-- Labels:  They are the map of the strings which k8s uses to select/organise and categorise pod objects.
-- Annotations: They are KVP which can be used to add new external tools like spinnaker 
-
-pods.spec
-- Affinity:  defines where should the pods run on a cluster; i..e same pod, same AZ etc
-- Probles: helps run health check and control pod restart on unhealthy state
--
-
-Pod Lifecycle:
-- Simple repn: Pending > Running > Succeeded (for short living pod) 
-- Long running: define restart policy on failure; controlled via Deployments, Statefulsets and Daemon sets
-- Short running: runs and terminates, no restart; controlled via Jobs and CronJobs
-
-Multi container Pod patterns:
-- Sidecar:  most generic pattern, one container is helper responsible for syncing data
-- Adapter:  like sidecar but sequential; i.e. helper container gets data from main container which it would process
-- Ambassador:  like sidecar, but helper server which can help communicate with external systems
-- Init: Runs to initialise environment for the main container.
+K8s is a container orchestration platform. {{ADD MORE GLOBE HERE}}
 
 
-Cool Commands:
+## The concept of state
 
-- `kubectl explain pods.{resourcePath}`  : your man page
-- `kubectl apply -f {fileName}.yaml` : POSTs the POD YAML file to API server; dont do this use Deployments instead
-- `kubectl get pods ` : Get  pod running info, but very limited data
-    - `-w`  : follows the pod deployment flow, command wont end and display status changes
-    - `-o wide` : displays,  IP, Node, etc along with basic stuff
-    - `-o yaml` : full detailed dump of the pod object  with the desired(.spec) and observed(.status) states.
-- `kubectl describe pods <pod_name>` : gives a nice human readable output on the status of the pod; includes pod env vars; and events which have happened while booting the pod
-- `kubectl logs <pod_name>` :  returns the Stdout and stderr data; use `-f` to follow the logs; use `--tail N` to get the last N log lines
-- `kubectl exec <pod_name>  -- <cmd>` : executes the `cmd` on the pod; use `-it` flag and `/bin/bash` or `sh` as cmd with the exec command to get access to the pod shell.
-- `kubectl delete <pod_name>` : deletes a given pod ; note: your deployment or other objects may recreate the pods
+A central concept in k8s is the concept of states. For anything defined in k8s there is a 
+-  Desired state > The ones which you define in your config
+-  Observed state > The state with k8s controllers see deployed in the system
+
+Everyone's happy as long as the desired and observed states match.
+
+But in the case they done match the process of reconcilliation kicks in. This process tries to bring the desired and observed state in sync.
+
+The above approach is critical to a the declarative paradigm of resource management with k8s supports.
+
+- Anything beloe `.spec` in the template relates to the deployment; anything below, `template.spec`  relates to the POD template
+- A deployments label selector is immutable, i.e. it cannot be deleted once created!
+- It might be imperetive to think that we may control static pods by providing the correct label selector; though this was possible in the early days of k8s, its not supported now as now a pod-template-hash is also used with the app label for the selection!
+
+## Commands
+
+- `kubectl apply -f <file_name>.yml` > Posts the deployment to the API server for K8s to configure
+- `kubectl get deploy <deployment>` > Gets the deployment details 
+- `kubectl rollout status deployment <deployment_name>` > this command will display the status of rollout of the deployment
+- `kubectl rollout pause deployment <deployment_name>` > this command will pause the rollout of the deployment
+- `kubectl rollout resume deployment <deployment_name>` > this command will resume the rollout of the deployment
+- `kubectl rollout history deployment <deployment_name>` > hisory of all rollouts of a given deployment
+- `kubectl rollout undo deployment <deployment_name> --to-revision=<number>` > updates the rollout to a given revision number, used for rollback
